@@ -1,8 +1,11 @@
 use bevy::{core::FixedTimestep, prelude::*};
 use rand::prelude::*;
 
-const WIDTH: u32 = 100;
-const HEIGHT: u32 = 100;
+const SIZE: i32 = 4;
+const SIZE_CNT: i32 = SIZE * SIZE;
+const CELL_ALIVE_COLOR: Color = Color::rgb(0.7, 0.7, 0.7);
+const CELL_DEAD_COLOR: Color = Color::rgb(0.1, 0.1, 0.1);
+const BACKGROUND_COLOR: Color = Color::rgb(0.04, 0.04, 0.04);
 
 fn main() {
     App::new()
@@ -12,12 +15,12 @@ fn main() {
             height: 800.0,
             ..default()
         })
-        .insert_resource(ClearColor(Color::rgb(0.04, 0.04, 0.04)))
+        .insert_resource(ClearColor(BACKGROUND_COLOR))
         .add_startup_system(setup_camera)
         .add_startup_system(spawn_cells)
         .add_system_set(
             SystemSet::new()
-                .with_run_criteria(FixedTimestep::step(0.5))
+                .with_run_criteria(FixedTimestep::step(1.0))
                 .with_system(step),
         )
         .add_system_set_to_stage(
@@ -30,11 +33,61 @@ fn main() {
         .run();
 }
 
-fn step(mut cells: Query<(&mut Cell, &mut Sprite)>) {
-    for (mut cell, mut sprite) in cells.iter_mut() {
-        cell.state = match cell.state {
-            CellState::Alive => CellState::Dead,
-            CellState::Dead => CellState::Alive,
+fn step(mut cells: Query<(&mut Cell, &mut Sprite)>, mut playing: ResMut<Playing>) {
+    if !playing.0 {
+        return;
+    }
+    playing.0 = false;
+
+    let mut old: Vec<bool> = Vec::new();
+    for (cell, _) in cells.iter() {
+        old.push(match cell.state {
+            CellState::Alive => true,
+            CellState::Dead => false,
+        })
+    }
+
+    for (i, (mut cell, mut sprite)) in cells.iter_mut().enumerate() {
+        let mut neigh = 0;
+
+        /* this is terribly wrong. First of all this does not work. Then we need to check 8 neighbors, not just 4 */
+        let x1: i32 = i as i32 + 1;
+        let x_1: i32 = i as i32 - 1;
+        let y1: i32 = i as i32 + SIZE;
+        let y_1: i32 = i as i32 - SIZE;
+
+        if x1 < SIZE_CNT && old[x1 as usize] {
+            neigh += 1
+        }
+
+        if x_1 > 0 && old[x_1 as usize] {
+            neigh += 1
+        }
+
+        if y1 < SIZE_CNT && old[y1 as usize] {
+            neigh += 1
+        }
+
+        if y_1 > 0 && old[y_1 as usize] {
+            neigh += 1
+        }
+
+        println!("{} has {} neighs", i, neigh);
+
+        match cell.state {
+            CellState::Alive => {
+                match neigh {
+                    1 | 4 => cell.change(CellState::Dead),
+                    _ => {},
+                }
+            },
+            CellState::Dead => {
+                match neigh {
+                    3 => cell.change(CellState::Alive),
+                    _ => {},
+                }
+
+            }
         };
         sprite.color = cell.state.color();
     }
@@ -44,12 +97,18 @@ fn setup_camera(mut commands: Commands) {
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
 }
 
-const CELL_ALIVE_COLOR: Color = Color::rgb(0.7, 0.7, 0.7);
-const CELL_DEAD_COLOR: Color = Color::rgb(0.2, 0.2, 0.2);
+#[derive(Component)]
+struct Playing(bool);
 
 #[derive(Component)]
 struct Cell {
     state: CellState,
+}
+
+impl Cell {
+    fn change(&mut self, new_state: CellState) {
+        self.state = new_state;
+    }
 }
 
 #[derive(Component)]
@@ -92,9 +151,9 @@ impl Size {
 }
 
 fn spawn_cells(mut commands: Commands) {
-    for x in 0..WIDTH {
-        for y in 0..HEIGHT {
-            let cell_state = match rand::thread_rng().gen_bool(0.5) {
+    for x in 0..SIZE {
+        for y in 0..SIZE {
+            let cell_state = match rand::thread_rng().gen_bool(0.2) {
                 true => CellState::Alive,
                 false => CellState::Dead,
             };
@@ -115,14 +174,16 @@ fn spawn_cells(mut commands: Commands) {
                 .insert(Size::square(0.9));
         }
     }
+
+    commands.insert_resource(Playing(true));
 }
 
 fn size_scaling(windows: Res<Windows>, mut q: Query<(&Size, &mut Transform)>) {
     let window = windows.get_primary().unwrap();
     for (sprite_size, mut transform) in q.iter_mut() {
         transform.scale = Vec3::new(
-            sprite_size.width / WIDTH as f32 * window.width() as f32,
-            sprite_size.height / HEIGHT as f32 * window.height() as f32,
+            sprite_size.width / SIZE as f32 * window.width() as f32,
+            sprite_size.height / SIZE as f32 * window.height() as f32,
             1.0,
         )
     }
@@ -137,8 +198,8 @@ fn position_translation(windows: Res<Windows>, mut q: Query<(&Position, &mut Tra
     let window = windows.get_primary().unwrap();
     for (pos, mut transform) in q.iter_mut() {
         transform.translation = Vec3::new(
-            convert(pos.x as f32, window.width() as f32, WIDTH as f32),
-            convert(pos.y as f32, window.height() as f32, HEIGHT as f32),
+            convert(pos.x as f32, window.width() as f32, SIZE as f32),
+            convert(pos.y as f32, window.height() as f32, SIZE as f32),
             0.0,
         );
     }
