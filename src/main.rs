@@ -50,29 +50,7 @@ fn step(mut cells: Query<(&mut Cell, &mut Sprite)>, mut playing: ResMut<Playing>
     for (i, (mut cell, mut sprite)) in cells.iter_mut().enumerate() {
         let mut neigh = 0;
 
-        /* this is terribly wrong. First of all this does not work. Then we need to check 8 neighbors, not just 4 */
-        let x1: i32 = i as i32 + 1;
-        let x_1: i32 = i as i32 - 1;
-        let y1: i32 = i as i32 + SIZE;
-        let y_1: i32 = i as i32 - SIZE;
-
-        if x1 < SIZE_CNT && old[x1 as usize] {
-            neigh += 1
-        }
-
-        if x_1 > 0 && old[x_1 as usize] {
-            neigh += 1
-        }
-
-        if y1 < SIZE_CNT && old[y1 as usize] {
-            neigh += 1
-        }
-
-        if y_1 > 0 && old[y_1 as usize] {
-            neigh += 1
-        }
-
-        println!("{} has {} neighs", i, neigh);
+        println!("{} is {:?} and has {} neighs", i, cell.state,neigh);
 
         match cell.state {
             CellState::Alive => {
@@ -100,7 +78,7 @@ fn setup_camera(mut commands: Commands) {
 #[derive(Component)]
 struct Playing(bool);
 
-#[derive(Component)]
+#[derive(Component, Clone, Copy, PartialEq, Eq)]
 struct Cell {
     state: CellState,
 }
@@ -111,7 +89,7 @@ impl Cell {
     }
 }
 
-#[derive(Component)]
+#[derive(Component, Debug, Copy, Clone, PartialEq, Eq)]
 enum CellState {
     Alive,
     Dead,
@@ -151,9 +129,9 @@ impl Size {
 }
 
 fn spawn_cells(mut commands: Commands) {
-    for x in 0..SIZE {
-        for y in 0..SIZE {
-            let cell_state = match rand::thread_rng().gen_bool(0.2) {
+    for y in 0..SIZE {
+        for x in 0..SIZE {
+            let cell_state = match rand::thread_rng().gen_bool(0.3) {
                 true => CellState::Alive,
                 false => CellState::Dead,
             };
@@ -199,7 +177,7 @@ fn position_translation(windows: Res<Windows>, mut q: Query<(&Position, &mut Tra
     for (pos, mut transform) in q.iter_mut() {
         transform.translation = Vec3::new(
             convert(pos.x as f32, window.width() as f32, SIZE as f32),
-            convert(pos.y as f32, window.height() as f32, SIZE as f32),
+            convert(pos.y as f32, -window.height() as f32, SIZE as f32),
             0.0,
         );
     }
