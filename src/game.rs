@@ -1,6 +1,7 @@
 use bevy::{core::FixedTimestep, prelude::*};
 use rand::prelude::*;
 
+use crate::components::cell::{Cell, CellState, Position};
 use crate::consts;
 
 pub struct GamePlugin;
@@ -16,36 +17,32 @@ impl Plugin for GamePlugin {
     }
 }
 
-#[derive(Component, Clone, Copy, PartialEq, Eq)]
-struct Cell {
-    state: CellState,
-}
+fn spawn_cells(mut commands: Commands) {
+    for y in 0..consts::SIZE {
+        for x in 0..consts::SIZE {
+            let cell_state = match rand::thread_rng().gen_bool(0.15) {
+                true => CellState::Alive,
+                false => CellState::Dead,
+            };
 
-impl Cell {
-    fn change(&mut self, new_state: CellState) {
-        self.state = new_state;
-    }
-}
-
-#[derive(Component, Debug, Copy, Clone, PartialEq, Eq)]
-pub enum CellState {
-    Alive,
-    Dead,
-}
-
-impl CellState {
-    fn color(&self) -> Color {
-        match *self {
-            CellState::Alive => consts::CELL_ALIVE_COLOR,
-            CellState::Dead => consts::CELL_DEAD_COLOR,
+            commands
+                .spawn_bundle(SpriteBundle {
+                    sprite: Sprite {
+                        color: cell_state.color(),
+                        ..default()
+                    },
+                    ..default()
+                })
+                .insert(Cell { state: cell_state })
+                .insert(Position {
+                    x: x as i32,
+                    y: y as i32,
+                })
+                .insert(crate::render::Size::square(0.9));
         }
     }
-}
 
-#[derive(Component, Clone, Copy, PartialEq, Eq, Debug)]
-pub struct Position {
-    pub x: i32,
-    pub y: i32,
+    commands.insert_resource(Playing(true));
 }
 
 #[derive(Component)]
@@ -124,34 +121,6 @@ impl Position {
             Some(i)
         }
     }
-}
-
-fn spawn_cells(mut commands: Commands) {
-    for y in 0..consts::SIZE {
-        for x in 0..consts::SIZE {
-            let cell_state = match rand::thread_rng().gen_bool(0.15) {
-                true => CellState::Alive,
-                false => CellState::Dead,
-            };
-
-            commands
-                .spawn_bundle(SpriteBundle {
-                    sprite: Sprite {
-                        color: cell_state.color(),
-                        ..default()
-                    },
-                    ..default()
-                })
-                .insert(Cell { state: cell_state })
-                .insert(Position {
-                    x: x as i32,
-                    y: y as i32,
-                })
-                .insert(crate::render::Size::square(0.9));
-        }
-    }
-
-    commands.insert_resource(Playing(true));
 }
 
 fn step(mut cells: Query<(&mut Cell, &Position, &mut Sprite)>, playing: ResMut<Playing>) {

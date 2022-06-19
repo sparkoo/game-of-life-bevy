@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 use crate::consts;
+use crate::components::cell::Position;
 
 pub struct RenderPlugin;
 
@@ -38,7 +39,7 @@ fn size_scaling(windows: Res<Windows>, mut q: Query<(&Size, &mut Transform)>) {
     }
 }
 
-fn position_translation(windows: Res<Windows>, mut q: Query<(&crate::game::Position, &mut Transform)>) {
+fn position_translation(windows: Res<Windows>, mut q: Query<(&Position, &mut Transform)>) {
     fn convert(pos: f32, bound_window: f32, bound_game: f32) -> f32 {
         let tile_size = bound_window / bound_game;
         pos / bound_game * bound_window - (bound_window / 2.) + (tile_size / 2.)

@@ -7,6 +7,7 @@ use render::*;
 mod game;
 mod render;
 mod consts;
+mod components;
 
 fn main() {
     App::new()
