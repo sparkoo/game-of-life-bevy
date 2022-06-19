@@ -12,11 +12,11 @@ mod render;
 
 fn main() {
     App::new()
-        .add_plugin(ControlsPlugin)
-        .add_plugin(RenderPlugin)
         .add_plugin(GamePlugin)
+        .add_plugin(RenderPlugin)
+        .add_plugin(ControlsPlugin)
         .add_plugins(DefaultPlugins)
-        .add_plugin(LogDiagnosticsPlugin::default())
-        .add_plugin(FrameTimeDiagnosticsPlugin::default())
+//        .add_plugin(LogDiagnosticsPlugin::default())
+//        .add_plugin(FrameTimeDiagnosticsPlugin::default())
         .run();
 }

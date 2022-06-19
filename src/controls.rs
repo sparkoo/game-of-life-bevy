@@ -1,5 +1,6 @@
-use crate::game::Playing;
 use bevy::{app::AppExit, prelude::*};
+
+use crate::game::{Playing, ClickedCellEvent};
 
 pub struct ControlsPlugin;
 
@@ -23,14 +24,12 @@ fn keyboard_controls(
     }
 }
 
-fn mouse_controls(windows: Res<Windows>, mouse_input: Res<Input<MouseButton>>) {
+fn mouse_controls(windows: Res<Windows>, mouse_input: Res<Input<MouseButton>>, mut clicked_event_writer: EventWriter<ClickedCellEvent>) {
     if mouse_input.just_pressed(MouseButton::Left) {
         let window = windows.get_primary().unwrap();
 
         if let Some(position) = window.cursor_position() {
-            println!("cursor position {}", position);
-        } else {
-            println!("cursor outside of the screen!");
+            clicked_event_writer.send(ClickedCellEvent { x: position.x, y: position.y })
         }
     }
 }

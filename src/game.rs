@@ -8,11 +8,14 @@ pub struct GamePlugin;
 
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
-        app.add_system_set(
+        app
+        .add_event::<ClickedCellEvent>()
+        .add_system_set(
             SystemSet::new()
                 .with_run_criteria(FixedTimestep::step(0.1))
                 .with_system(step),
         )
+        .add_system(clicked_on_cell)
         .add_startup_system(spawn_cells);
     }
 }
@@ -52,6 +55,18 @@ pub struct Playing(bool);
 impl Playing {
     pub fn toggle(&mut self) {
         self.0 = !self.0
+    }
+}
+
+#[derive(Debug)]
+pub struct ClickedCellEvent {
+    pub x: f32,
+    pub y: f32,
+}
+
+fn clicked_on_cell(mut ev_clicked: EventReader<ClickedCellEvent>) {
+    for ev in ev_clicked.iter() {
+        eprintln!("Clicked received coords {:?}", ev);
     }
 }
 
