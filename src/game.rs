@@ -1,22 +1,24 @@
 use bevy::{core::FixedTimestep, prelude::*};
 use rand::prelude::*;
 
+use crate::clickable::OnClickSprite;
 use crate::components::cell::{Cell, CellState, Position};
+
+use crate::components;
 use crate::consts;
 
 pub struct GamePlugin;
 
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
-        app
-        .add_event::<ClickedCellEvent>()
-        .add_system_set(
-            SystemSet::new()
-                .with_run_criteria(FixedTimestep::step(0.1))
-                .with_system(step),
-        )
-        .add_system(clicked_on_cell)
-        .add_startup_system(spawn_cells);
+        app.add_event::<ClickedCellEvent>()
+            .add_system_set(
+                SystemSet::new()
+                    .with_run_criteria(FixedTimestep::step(0.1))
+                    .with_system(step),
+            )
+            .add_system(clicked_on_cell)
+            .add_startup_system(spawn_cells);
     }
 }
 
@@ -64,9 +66,13 @@ pub struct ClickedCellEvent {
     pub y: f32,
 }
 
-fn clicked_on_cell(mut ev_clicked: EventReader<ClickedCellEvent>) {
+fn clicked_on_cell(mut ev_clicked: EventReader<OnClickSprite>, mut q: Query<&mut Cell>) {
     for ev in ev_clicked.iter() {
-        eprintln!("Clicked received coords {:?}", ev);
+        if let Ok(mut c) = q.get_mut(ev.entity) {
+            c.state = CellState::Alive;
+        } else {
+            eprintln!("failed to query");
+        }
     }
 }
 
@@ -140,16 +146,17 @@ impl Position {
 }
 
 fn step(mut cells: Query<(&mut Cell, &Position, &mut Sprite)>, playing: ResMut<Playing>) {
-    if !playing.0 {
-        return;
-    }
-
     let mut old: Vec<Cell> = Vec::new();
-    for (cell, _, _) in cells.iter() {
+    for (cell, _, mut sprite) in cells.iter_mut() {
+        sprite.color = cell.state.color();
         old.push(cell.clone())
     }
 
-    for (mut cell, position, mut sprite) in cells.iter_mut() {
+    if !playing.0 {
+        return;
+    }
+    
+    for (mut cell, position, _) in cells.iter_mut() {
         let mut alive_neighs = 0;
 
         for neigh_pos in position.neighbor_coords(consts::SIZE).iter() {
@@ -180,6 +187,5 @@ fn step(mut cells: Query<(&mut Cell, &Position, &mut Sprite)>, playing: ResMut<P
                 _ => {}
             },
         };
-        sprite.color = cell.state.color();
     }
 }

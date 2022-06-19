@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::consts;
 
-#[derive(Component, Clone, Copy, PartialEq, Eq)]
+#[derive(Component, Clone, Copy, PartialEq, Eq, Debug)]
 pub struct Cell {
     pub state: CellState,
 }
