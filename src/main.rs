@@ -1,7 +1,7 @@
-use bevy::{core::FixedTimestep, prelude::*};
+use bevy::{core::FixedTimestep, prelude::*, app::AppExit};
 use rand::prelude::*;
 
-const SIZE: i32 = 4;
+const SIZE: i32 = 100;
 const SIZE_CNT: i32 = SIZE * SIZE;
 const CELL_ALIVE_COLOR: Color = Color::rgb(0.7, 0.7, 0.7);
 const CELL_DEAD_COLOR: Color = Color::rgb(0.1, 0.1, 0.1);
@@ -20,9 +20,10 @@ fn main() {
         .add_startup_system(spawn_cells)
         .add_system_set(
             SystemSet::new()
-                .with_run_criteria(FixedTimestep::step(1.0))
+                .with_run_criteria(FixedTimestep::step(0.1))
                 .with_system(step),
         )
+        .add_system(keyboard_controls)
         .add_system_set_to_stage(
             CoreStage::PostUpdate,
             SystemSet::new()
@@ -33,39 +34,46 @@ fn main() {
         .run();
 }
 
-fn step(mut cells: Query<(&mut Cell, &mut Sprite)>, mut playing: ResMut<Playing>) {
+fn step(mut cells: Query<(&mut Cell, &Position, &mut Sprite)>, playing: ResMut<Playing>) {
     if !playing.0 {
         return;
     }
-    playing.0 = false;
 
-    let mut old: Vec<bool> = Vec::new();
-    for (cell, _) in cells.iter() {
-        old.push(match cell.state {
-            CellState::Alive => true,
-            CellState::Dead => false,
-        })
+    let mut old: Vec<Cell> = Vec::new();
+    for (cell, _, _) in cells.iter() {
+        old.push(cell.clone())
     }
 
-    for (i, (mut cell, mut sprite)) in cells.iter_mut().enumerate() {
-        let mut neigh = 0;
+    for (mut cell, position, mut sprite) in cells.iter_mut() {
+        let mut alive_neighs = 0;
 
-        println!("{} is {:?} and has {} neighs", i, cell.state,neigh);
-
-        match cell.state {
-            CellState::Alive => {
-                match neigh {
-                    1 | 4 => cell.change(CellState::Dead),
-                    _ => {},
-                }
-            },
-            CellState::Dead => {
-                match neigh {
-                    3 => cell.change(CellState::Alive),
-                    _ => {},
-                }
-
+        for neigh_pos in position.neighbor_coords(SIZE).iter() {
+            match neigh_pos.to_index(SIZE, SIZE_CNT) {
+                Some(neigh_i) => match old.get(neigh_i as usize) {
+                    Some(neighbor_cell) => match neighbor_cell.state {
+                        CellState::Alive => alive_neighs += 1,
+                        CellState::Dead => {}
+                    },
+                    None => eprintln!(
+                        "no neighbor found at index {}. This should not happen!",
+                        neigh_i
+                    ),
+                },
+                None => eprintln!(
+                    "failed to convert position {:?} to index. This should not happen!",
+                    neigh_pos
+                ),
             }
+        }
+        match cell.state {
+            CellState::Alive => match alive_neighs {
+                1 | 4 => cell.change(CellState::Dead),
+                _ => {}
+            },
+            CellState::Dead => match alive_neighs {
+                3 => cell.change(CellState::Alive),
+                _ => {}
+            },
         };
         sprite.color = cell.state.color();
     }
@@ -104,10 +112,79 @@ impl CellState {
     }
 }
 
-#[derive(Component, Clone, Copy, PartialEq, Eq)]
+#[derive(Component, Clone, Copy, PartialEq, Eq, Debug)]
 struct Position {
     x: i32,
     y: i32,
+}
+
+impl Position {
+    fn neighbor_coords(&self, side_size: i32) -> Vec<Position> {
+        let mut neighbors: Vec<Position> = Vec::new();
+        // above me
+        if self.y > 0 {
+            if self.x > 0 {
+                neighbors.push(Position {
+                    x: self.x - 1,
+                    y: self.y - 1,
+                });
+            }
+            neighbors.push(Position {
+                x: self.x,
+                y: self.y - 1,
+            });
+            if side_size - self.x % side_size != 1 {
+                neighbors.push(Position {
+                    x: self.x + 1,
+                    y: self.y - 1,
+                });
+            }
+        }
+
+        // in line with me
+        if self.x > 0 {
+            neighbors.push(Position {
+                x: self.x - 1,
+                y: self.y,
+            });
+        }
+        if side_size - self.x % side_size != 1 {
+            neighbors.push(Position {
+                x: self.x + 1,
+                y: self.y,
+            });
+        }
+
+        // below me
+        if side_size - self.y % side_size != 1 {
+            if self.x > 0 {
+                neighbors.push(Position {
+                    x: self.x - 1,
+                    y: self.y + 1,
+                });
+            }
+            neighbors.push(Position {
+                x: self.x,
+                y: self.y + 1,
+            });
+            if side_size - self.x % side_size != 1 {
+                neighbors.push(Position {
+                    x: self.x + 1,
+                    y: self.y + 1,
+                });
+            }
+        }
+        neighbors
+    }
+
+    fn to_index(&self, side_size: i32, size: i32) -> Option<i32> {
+        let i: i32 = (side_size * self.y) + self.x;
+        if i < 0 || i >= size {
+            None
+        } else {
+            Some(i)
+        }
+    }
 }
 
 #[derive(Component)]
@@ -131,7 +208,7 @@ impl Size {
 fn spawn_cells(mut commands: Commands) {
     for y in 0..SIZE {
         for x in 0..SIZE {
-            let cell_state = match rand::thread_rng().gen_bool(0.3) {
+            let cell_state = match rand::thread_rng().gen_bool(0.1) {
                 true => CellState::Alive,
                 false => CellState::Dead,
             };
@@ -180,5 +257,15 @@ fn position_translation(windows: Res<Windows>, mut q: Query<(&Position, &mut Tra
             convert(pos.y as f32, -window.height() as f32, SIZE as f32),
             0.0,
         );
+    }
+}
+
+fn keyboard_controls(keyboard_input: Res<Input<KeyCode>>, mut playing: ResMut<Playing>, mut exit: EventWriter<AppExit>) {
+    if keyboard_input.just_pressed(KeyCode::Space) {
+        playing.0 = !playing.0;
+    }
+
+    if keyboard_input.just_pressed(KeyCode::Escape) {
+        exit.send(AppExit);
     }
 }
