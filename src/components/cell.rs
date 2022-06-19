@@ -8,8 +8,11 @@ pub struct Cell {
 }
 
 impl Cell {
-    pub fn change(&mut self, new_state: CellState) {
-        self.state = new_state;
+    pub fn toggle(&mut self) {
+        self.state = match self.state {
+            CellState::Alive => CellState::Dead,
+            CellState::Dead => CellState::Alive,
+        }
     }
 }
 

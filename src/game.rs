@@ -64,10 +64,10 @@ pub struct ClickedCellEvent {
     pub y: f32,
 }
 
-fn clicked_on_cell(mut ev_clicked: EventReader<OnClickSprite>, mut q: Query<&mut Cell>) {
+fn clicked_on_cell(mut ev_clicked: EventReader<OnClickSprite>, mut cells: Query<&mut Cell>) {
     for ev in ev_clicked.iter() {
-        if let Ok(mut c) = q.get_mut(ev.entity) {
-            c.state = CellState::Alive;
+        if let Ok(mut cell) = cells.get_mut(ev.entity) {
+            cell.toggle();
         } else {
             eprintln!("failed to query");
         }
@@ -178,10 +178,10 @@ fn step(mut cells: Query<(&mut Cell, &Position, &mut Sprite)>, playing: ResMut<P
         match cell.state {
             CellState::Alive => match alive_neighs {
                 2 | 3 => {}
-                _ => cell.change(CellState::Dead),
+                _ => cell.toggle(),
             },
             CellState::Dead => match alive_neighs {
-                3 => cell.change(CellState::Alive),
+                3 => cell.toggle(),
                 _ => {}
             },
         };
