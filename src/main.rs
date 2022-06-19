@@ -1,4 +1,5 @@
-use bevy::{core::FixedTimestep, prelude::*, app::AppExit};
+use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
+use bevy::{app::AppExit, core::FixedTimestep, prelude::*};
 use rand::prelude::*;
 
 const SIZE: i32 = 100;
@@ -31,6 +32,8 @@ fn main() {
                 .with_system(size_scaling),
         )
         .add_plugins(DefaultPlugins)
+        .add_plugin(LogDiagnosticsPlugin::default())
+        .add_plugin(FrameTimeDiagnosticsPlugin::default())
         .run();
 }
 
@@ -260,7 +263,11 @@ fn position_translation(windows: Res<Windows>, mut q: Query<(&Position, &mut Tra
     }
 }
 
-fn keyboard_controls(keyboard_input: Res<Input<KeyCode>>, mut playing: ResMut<Playing>, mut exit: EventWriter<AppExit>) {
+fn keyboard_controls(
+    keyboard_input: Res<Input<KeyCode>>,
+    mut playing: ResMut<Playing>,
+    mut exit: EventWriter<AppExit>,
+) {
     if keyboard_input.just_pressed(KeyCode::Space) {
         playing.0 = !playing.0;
     }
