@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-pub const SIZE: i32 = 10;
+pub const SIZE: i32 = 50;
 pub const SIZE_CNT: i32 = SIZE * SIZE;
 
 pub const CELL_ALIVE_COLOR: Color = Color::rgb(0.7, 0.7, 0.7);

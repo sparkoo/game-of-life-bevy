@@ -26,13 +26,12 @@ fn on_click(
             pos.x -= window.width() / 2.0;
             pos.y -= window.height() / 2.0;
             for (e, t) in sprites.iter() {
-                if pos.x >= t.translation.x - t.scale.x
-                    && pos.x <= t.translation.x + t.scale.x
-                    && pos.y >= t.translation.y - t.scale.y
-                    && pos.y <= t.translation.y + t.scale.y
+                if pos.x >= t.translation.x - t.scale.x / 2.0
+                    && pos.x <= t.translation.x + t.scale.x / 2.0
+                    && pos.y >= t.translation.y - t.scale.y / 2.0
+                    && pos.y <= t.translation.y + t.scale.y / 2.0
                 {
                     clicked_event_writer.send(OnClickSprite { entity: e });
-                    println!("clicked? [{:?}] {:?} {:?}", pos, e, t)
                 }
             }
         }

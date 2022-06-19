@@ -3,8 +3,6 @@ use rand::prelude::*;
 
 use crate::clickable::OnClickSprite;
 use crate::components::cell::{Cell, CellState, Position};
-
-use crate::components;
 use crate::consts;
 
 pub struct GamePlugin;
@@ -155,7 +153,7 @@ fn step(mut cells: Query<(&mut Cell, &Position, &mut Sprite)>, playing: ResMut<P
     if !playing.0 {
         return;
     }
-    
+
     for (mut cell, position, _) in cells.iter_mut() {
         let mut alive_neighs = 0;
 
@@ -179,8 +177,8 @@ fn step(mut cells: Query<(&mut Cell, &Position, &mut Sprite)>, playing: ResMut<P
         }
         match cell.state {
             CellState::Alive => match alive_neighs {
-                1 | 4 => cell.change(CellState::Dead),
-                _ => {}
+                2 | 3 => {}
+                _ => cell.change(CellState::Dead),
             },
             CellState::Dead => match alive_neighs {
                 3 => cell.change(CellState::Alive),
