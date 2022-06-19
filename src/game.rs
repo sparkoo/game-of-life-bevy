@@ -20,7 +20,8 @@ impl Plugin for GamePlugin {
 fn spawn_cells(mut commands: Commands) {
     for y in 0..consts::SIZE {
         for x in 0..consts::SIZE {
-            let cell_state = match rand::thread_rng().gen_bool(0.15) {
+            // start with all dead, because we want to set live cells with mouse or load from file
+            let cell_state = match rand::thread_rng().gen_bool(0.0) {
                 true => CellState::Alive,
                 false => CellState::Dead,
             };
@@ -42,7 +43,7 @@ fn spawn_cells(mut commands: Commands) {
         }
     }
 
-    commands.insert_resource(Playing(true));
+    commands.insert_resource(Playing(false));
 }
 
 #[derive(Component)]
