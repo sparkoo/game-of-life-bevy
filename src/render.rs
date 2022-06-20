@@ -1,7 +1,8 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, window::PresentMode};
 
 use crate::consts;
 use crate::components::cell::Position;
+use crate::game::{Playing, StepTimer};
 
 pub struct RenderPlugin;
 
@@ -11,8 +12,11 @@ impl Plugin for RenderPlugin {
             title: "Game of Life!".to_string(),
             width: 800.0,
             height: 800.0,
+            resizable: false,
+//            present_mode: PresentMode::Mailbox,
             ..default()
         })
+        .add_system(update_title)
         .insert_resource(ClearColor(consts::BACKGROUND_COLOR))
         .add_startup_system(setup_camera)
         .add_system_set_to_stage(
@@ -22,6 +26,16 @@ impl Plugin for RenderPlugin {
                 .with_system(size_scaling),
         );
     }
+}
+
+struct Title {
+    playing: bool,
+    speed: f32,
+}
+
+fn update_title(mut windows: ResMut<Windows>, playing: Res<Playing>, timer: Res<StepTimer>) {
+    let window = windows.get_primary_mut().unwrap();
+    window.set_title(format!("Game of Life! [{}] [{} steps per second]", if playing.0 {"playing"} else {"stopped"}, timer.steps_per_second));
 }
 
 fn setup_camera(mut commands: Commands) {

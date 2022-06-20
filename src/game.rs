@@ -1,4 +1,5 @@
 use bevy::{core::FixedTimestep, prelude::*};
+use core::time::Duration;
 use rand::prelude::*;
 
 use crate::clickable::OnClickSprite;
@@ -10,13 +11,11 @@ pub struct GamePlugin;
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<ClickedCellEvent>()
-            .add_system_set(
-                SystemSet::new()
-                    .with_run_criteria(FixedTimestep::step(0.1))
-                    .with_system(step),
-            )
+            .add_system(step)
             .add_system(clicked_on_cell)
-            .add_startup_system(spawn_cells);
+            .add_startup_system(spawn_cells)
+            .insert_resource(Playing(false))
+            .insert_resource(StepTimer::new(1));
     }
 }
 
@@ -42,7 +41,7 @@ fn spawn_cells(mut commands: Commands) {
                     x: x as i32,
                     y: y as i32,
                 })
-                .insert(crate::render::Size::square(0.9));
+                .insert(crate::render::Size::square(0.95));
         }
     }
 
@@ -50,7 +49,7 @@ fn spawn_cells(mut commands: Commands) {
 }
 
 #[derive(Component)]
-pub struct Playing(bool);
+pub struct Playing(pub bool);
 
 impl Playing {
     pub fn toggle(&mut self) {
@@ -143,14 +142,51 @@ impl Position {
     }
 }
 
-fn step(mut cells: Query<(&mut Cell, &Position, &mut Sprite)>, playing: ResMut<Playing>) {
+pub struct StepTimer {
+    pub steps_per_second: u64,
+    timer: Timer,
+}
+
+impl StepTimer {
+    fn new(steps_per_second: u64) -> Self {
+        Self {
+            steps_per_second,
+            timer: Timer::new(Duration::from_millis(1000 / steps_per_second), true),
+        }
+    }
+
+    pub fn inc(&mut self) {
+        if self.steps_per_second < 500 {
+            self.steps_per_second *= 2;
+        }
+        self.update_duration();
+    }
+
+    pub fn dec(&mut self) {
+        if self.steps_per_second > 1 {
+            self.steps_per_second /= 2;
+        }
+        self.update_duration();
+    }
+
+    fn update_duration(&mut self) {
+        self.timer.set_duration(Duration::from_millis(1000 / self.steps_per_second));
+    }
+}
+
+fn step(
+    time: Res<Time>,
+    mut timer: ResMut<StepTimer>,
+    mut cells: Query<(&mut Cell, &Position, &mut Sprite)>,
+    playing: ResMut<Playing>,
+) {
     let mut old: Vec<Cell> = Vec::new();
     for (cell, _, mut sprite) in cells.iter_mut() {
         sprite.color = cell.state.color();
         old.push(cell.clone())
     }
 
-    if !playing.0 {
+    if !playing.0 || !timer.timer.tick(time.delta()).just_finished() {
         return;
     }
 

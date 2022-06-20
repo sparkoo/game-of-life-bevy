@@ -1,6 +1,6 @@
 use bevy::{app::AppExit, prelude::*};
 
-use crate::game::{Playing, ClickedCellEvent};
+use crate::game::{Playing, ClickedCellEvent, StepTimer};
 
 pub struct ControlsPlugin;
 
@@ -14,13 +14,24 @@ fn keyboard_controls(
     keyboard_input: Res<Input<KeyCode>>,
     mut playing: ResMut<Playing>,
     mut exit: EventWriter<AppExit>,
+    mut timer: ResMut<StepTimer>,
 ) {
+//    println!("input {:?}", keyboard_input);
+
     if keyboard_input.just_pressed(KeyCode::Space) {
         playing.toggle()
     }
 
     if keyboard_input.just_pressed(KeyCode::Escape) || keyboard_input.just_pressed(KeyCode::Q) {
         exit.send(AppExit);
+    }
+
+    if keyboard_input.just_pressed(KeyCode::NumpadAdd) {
+        timer.inc();
+    }
+
+    if keyboard_input.just_pressed(KeyCode::NumpadSubtract) {
+        timer.dec();
     }
 }
 

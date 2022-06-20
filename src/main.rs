@@ -19,7 +19,7 @@ fn main() {
         .add_plugin(ControlsPlugin)
         .add_plugin(Clickable)
         .add_plugins(DefaultPlugins)
-        //        .add_plugin(LogDiagnosticsPlugin::default())
-        //        .add_plugin(FrameTimeDiagnosticsPlugin::default())
+//                .add_plugin(LogDiagnosticsPlugin::default())
+//                .add_plugin(FrameTimeDiagnosticsPlugin::default())
         .run();
 }
