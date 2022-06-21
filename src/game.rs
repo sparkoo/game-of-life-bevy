@@ -55,6 +55,10 @@ impl Playing {
     pub fn toggle(&mut self) {
         self.0 = !self.0
     }
+
+    pub fn stop(&mut self) {
+        self.0 = false;
+    }
 }
 
 #[derive(Debug)]

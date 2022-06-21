@@ -35,7 +35,7 @@ struct Title {
 
 fn update_title(mut windows: ResMut<Windows>, playing: Res<Playing>, timer: Res<StepTimer>) {
     let window = windows.get_primary_mut().unwrap();
-    window.set_title(format!("Game of Life! [{}] [{} steps per second]", if playing.0 {"playing"} else {"stopped"}, timer.steps_per_second));
+    window.set_title(format!("Game of Life! [{}] [{} steps per second]; [+ speed up] [- slow down] [R reset] [Q exit]", if playing.0 {"playing"} else {"stopped"}, timer.steps_per_second));
 }
 
 fn setup_camera(mut commands: Commands) {

@@ -14,6 +14,10 @@ impl Cell {
             CellState::Dead => CellState::Alive,
         }
     }
+
+    pub fn die(&mut self) {
+        self.state = CellState::Dead;
+    }
 }
 
 #[derive(Component, Debug, Copy, Clone, PartialEq, Eq)]
