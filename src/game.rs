@@ -1,10 +1,11 @@
-use bevy::{core::FixedTimestep, prelude::*};
+use bevy::prelude::*;
 use core::time::Duration;
 use rand::prelude::*;
 
 use crate::clickable::OnClickSprite;
 use crate::components::cell::{Cell, CellState, Position};
 use crate::consts;
+use crate::loader::{CoordsAsset, Formations};
 
 pub struct GamePlugin;
 
@@ -13,13 +14,22 @@ impl Plugin for GamePlugin {
         app.add_event::<ClickedCellEvent>()
             .add_system(step)
             .add_system(clicked_on_cell)
-            .add_startup_system(spawn_cells)
+            .add_startup_system_to_stage(StartupStage::PostStartup, spawn_cells)
             .insert_resource(Playing(false))
             .insert_resource(StepTimer::new(1));
     }
 }
 
-fn spawn_cells(mut commands: Commands) {
+fn spawn_cells(
+    mut commands: Commands,
+    coords: Res<Formations>,
+    server: Res<AssetServer>,
+    blabol: Res<Assets<CoordsAsset>>,
+) {
+    println!("available formations {:?}", coords.0);
+    for c in coords.0.iter() {
+        println!("eh {:?}", c);
+    }
     for y in 0..consts::SIZE {
         for x in 0..consts::SIZE {
             // start with all dead, because we want to set live cells with mouse or load from file
@@ -174,7 +184,8 @@ impl StepTimer {
     }
 
     fn update_duration(&mut self) {
-        self.timer.set_duration(Duration::from_millis(1000 / self.steps_per_second));
+        self.timer
+            .set_duration(Duration::from_millis(1000 / self.steps_per_second));
     }
 }
 

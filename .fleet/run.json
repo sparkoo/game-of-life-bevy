@@ -3,7 +3,7 @@
         {
             "type": "cargo",
             "name": "run",
-            "environment": {}, // optional
+            "environment": {"RUST_BACKTRACE": "1",}, // optional
             "dependsOn": [], // optional
             "cargoArgs": ["run"], // optional
             "cargoExtraArgs": [], // optional

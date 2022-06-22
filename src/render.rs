@@ -1,4 +1,5 @@
-use bevy::{prelude::*, window::PresentMode};
+use bevy::prelude::*;
+//use bevy::window::PresentMode;
 
 use crate::consts;
 use crate::components::cell::Position;
@@ -26,11 +27,6 @@ impl Plugin for RenderPlugin {
                 .with_system(size_scaling),
         );
     }
-}
-
-struct Title {
-    playing: bool,
-    speed: f32,
 }
 
 fn update_title(mut windows: ResMut<Windows>, playing: Res<Playing>, timer: Res<StepTimer>) {
