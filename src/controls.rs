@@ -17,7 +17,7 @@ fn keyboard_controls(
     mut timer: ResMut<StepTimer>,
     mut cells: Query<&mut Cell>,
 ) {
-//    println!("input {:?}", keyboard_input);
+    println!("input {:?}", keyboard_input);
 
     if keyboard_input.just_pressed(KeyCode::Space) {
         play.toggle();
@@ -34,11 +34,11 @@ fn keyboard_controls(
         exit.send(AppExit);
     }
 
-    if keyboard_input.just_pressed(KeyCode::NumpadAdd) {
+    if keyboard_input.just_pressed(KeyCode::NumpadAdd) || keyboard_input.just_pressed(KeyCode::Equals) {
         timer.inc();
     }
 
-    if keyboard_input.just_pressed(KeyCode::NumpadSubtract) {
+    if keyboard_input.just_pressed(KeyCode::NumpadSubtract) || keyboard_input.just_pressed(KeyCode::Minus) {
         timer.dec();
     }
 }
